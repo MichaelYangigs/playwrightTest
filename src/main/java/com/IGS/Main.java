@@ -210,18 +210,15 @@ public class Main {
         }
     }
 
-    // 执行Application的完整工作流程
+    // 执行Application的审批工作流程
     private static void processApplicationWorkflow(Page page, String[] data) throws Exception {
         try {
-
-            // 0. 提交申请
+            // 1. 提交申请
             submitApplication(page);
 
-            // 1. 导航回应用列表
+            // 导航回应用列表
             navigateToApplicationList(page);
-
-            String contractName = getFirstContractName(page);
-
+            // 修改Approved No
             updateApprovedNo(page, data);
 
             // 2. 接受申请
@@ -245,6 +242,7 @@ public class Main {
             // 8. 发送邮件并生成quota
             draftNotification(page, data);
 
+            String contractName = getFirstContractName(page);
             appendLog("Completed workflow for application: " + contractName);
         } catch (Exception e) {
             appendLog("Error processing workflow: " + e.getMessage());
@@ -257,7 +255,7 @@ public class Main {
         // 点击请求批准按钮
         page.locator("button:has-text('Submit')").click();
 
-        // 检查弹窗是否出现（3秒内）
+        // 检查弹窗是否出现（2秒内）
         boolean isDialogPresent = false;
         try {
             page.waitForSelector(".el-message-box:visible",
@@ -288,12 +286,11 @@ public class Main {
         getFirstTableRowAndClickEditButton(page);
 
         // 点击 Manpower Plan 标签页
-        appendLog("点击 Manpower Plan 标签页...");
+        appendLog("Click Manpower Plan Tab...");
         page.getByRole(AriaRole.TAB, new Page.GetByRoleOptions().setName("Manpower Plan")).click();
         page.waitForTimeout(1500); // 等待内容加载
 
         // 定位Common Trade表格的第一行
-        appendLog("定位Common Trade表格的第一行数据...");
         Locator commonTradeTable = page.locator(
                 "//div[contains(@class, 'form-part-title') and contains(., 'Part 2: Manpower Requirement By Trade')]" +
                         "//following-sibling::div[contains(@class, 'form-item-content')]" +
@@ -305,7 +302,6 @@ public class Main {
         Locator firstRow = commonTradeTable.locator("//tbody/tr[1]");
 
         // 点击第一行的编辑按钮
-        appendLog("点击第一行数据的编辑按钮...");
         firstRow.locator("//td[contains(@class, 'operation')]//i[contains(@class, 'mdi-square-edit-outline')]").click();
 
         // 等待编辑弹窗出现
@@ -401,6 +397,7 @@ public class Main {
         Locator subjectInput = page.locator("label:has-text('Subject:') + div input");
         subjectInput.fill(data[EMAIL_SUBJECT]);
         appendLog("Subject filling completed");
+        page.waitForTimeout(1000); //等待填充完成
 
         // 发送邮件
         page.locator("button:has-text('Send')").click();
